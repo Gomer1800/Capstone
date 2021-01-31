@@ -18,16 +18,18 @@ class Subsystem:
 
     def cvtToRGB(self):
         self.modified = cv2.cvtColor(self.modified, cv2.COLOR_BGR2RGB)
-        pass
 
     def resize(self, newW, newH):
         self.modified = cv2.resize(self.modified, (newW, newH))
-        pass
 
     def imgToArr(self):
         self.modified = img_to_array(self.modified)
-        pass
 
     def encode(self):
         self.modified = preprocess_input(self.modified)
-        pass
+
+    def prepareFace(self):
+        self.cvtToRGB()
+        self.resize(224, 224)
+        self.imgToArr()
+        self.encode()
