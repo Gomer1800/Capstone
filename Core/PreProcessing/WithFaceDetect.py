@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import Core.PreProcessing.Subsystem as Preprocessor
 
 
 class FaceDetect:
@@ -35,9 +36,29 @@ class FaceDetect:
         (endX, endY) = (min(self.width - 1, endX), min(self.height - 1, endY))
         return (startX, startY, endX, endY)
 
-
     def addFace(self, face):
         self.faces.append(face)
 
     def addLocations(self, startX, startY, endX, endY):
         self.locations.append((startX, startY, endX, endY))
+
+
+    def runFaceDetect(self, args):
+        detections = self.obtainFaceDetects()
+
+        # loop over the detections
+        for i in range(0, detections.shape[2]):
+            # extract the confidence (i.e., probability) associated with
+            # the detection
+            confidence = detections[0, 0, i, 2]
+
+            # filter out weak detections by ensuring the confidence is
+            # greater than the minimum confidence
+            if confidence > args["confidence"]:
+                (startX, startY, endX, endY) = self.computeFaceBox(detections, i)
+
+                face = Preprocessor.Subsystem(self.frame[startY:endY, startX:endX])
+                face.prepareFace()
+
+                self.addFace(face.modified)
+                self.addLocations(startX, startY, endX, endY)
