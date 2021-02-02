@@ -21,6 +21,9 @@ class Subsystem:
         self.camera = VideoStream(src=0).start()
         time.sleep(2.0)
 
+    def shutdown(self):
+        self.camera.stop()
+
     def capture_image(self):
         """
         TODO(LUIS): What is the exact format type for an open cv image?
