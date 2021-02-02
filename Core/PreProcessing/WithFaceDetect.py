@@ -42,7 +42,6 @@ class FaceDetect:
     def addLocations(self, startX, startY, endX, endY):
         self.locations.append((startX, startY, endX, endY))
 
-
     def runFaceDetect(self, args):
         detections = self.obtainFaceDetects()
 
