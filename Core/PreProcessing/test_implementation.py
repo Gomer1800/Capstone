@@ -29,7 +29,7 @@ def main():
         for box in locations:
             (startX, startY, endX, endY) = box
 
-            color = (0, 255, 0) # GREEN outline
+            color = (0, 255, 0)  # GREEN outline
             cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
 
         cv2.imshow("Frame", frame)
