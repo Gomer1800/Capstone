@@ -1,5 +1,6 @@
 import cv2
 
+
 class SubSystem:
     def __init__(self):
         # TODO(Jett): this needs more information
@@ -25,6 +26,9 @@ class SubSystem:
         color = (0, 255, 0) if label == "Mask" else (0, 0, 255)
         return color
 
+    def setOutput(self, frame):
+        self.output = frame
+
     def probability(self, label, detection):
         mask = detection[0]
         noMask = detection[1]
@@ -40,7 +44,8 @@ class SubSystem:
         label = self.makeLabel(detection)
         color = self.determineLabelColor(label)
         finalLabel = self.probability(label, detection)
-        self.integrate(frame, finalLabel, color, startX, startY, endX, endY)
+        self.setOutput(frame)
+        self.integrate(self.output, finalLabel, color, startX, startY, endX, endY)
         return self.output
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

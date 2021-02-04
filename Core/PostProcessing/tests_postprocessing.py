@@ -1,14 +1,22 @@
 import cv2
 import os
 import Core.PreProcessing.WithFaceDetect as FaceDetection
+import Core.PreProcessing.Subsystem as PreProcessor
 import Core.Camera.Subsystem as Camera
 import Core.PostProcessing.SubSystem as PostProcessing
 
 
 def main():
-    prototxtPath = os.path.sep.join(["face_detector", "deploy.prototxt"])
-    weightsPath = os.path.sep.join(["face_detector",
+    prototxtPath = os.path.sep.join(["..",
+                                     "PreProcessing",
+                                     "face_detector",
+                                     "deploy.prototxt"])
+
+    weightsPath = os.path.sep.join(["..",
+                                    "PreProcessing",
+                                    "face_detector",
                                     "res10_300x300_ssd_iter_140000.caffemodel"])
+
     faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 
     camera = Camera.Subsystem(
@@ -17,14 +25,42 @@ def main():
         camera_path=None,
         storage_path=None
     )
+
+    preprocessor = PreProcessor.Subsystem(
+        frame=None
+    )
+
+    face_detection = FaceDetection.Subsystem(
+        frame=None,
+        height=None,
+        width=None,
+        blob=None,
+        faceNet=None
+    )
+
+    postprocessor = PostProcessing.SubSystem()
+
     camera.initialize()
+    preprocessor.initialize()
+    face_detection.initialize(faceNet)
+    postprocessor.initialize()
+
 
     while True:
         frame = camera.capture_image()
 
         # Face Detection Module
-        face_detection = FaceDetection.Subsystem(frame, faceNet)
+        face_detection.setFrame(frame)
         faces, locations = face_detection.runFaceDetect()
+
+        # Pre Process Module
+        prepared = []
+        if len(faces) > 0:
+            for face in faces:
+                preprocessor.setFrame(face)
+                modified = preprocessor.prepareFace()
+                cv2.imshow("modified", modified)
+                prepared.append(modified)
 
         # Drawing box around face location
         for box in locations:
@@ -39,7 +75,7 @@ def main():
             postprocessing = PostProcessing.SubSystem()
             output_frame = postprocessing.prepareOutputFrame(frame, (1, 0), startX, startY, endX, endY)
 
-        cv2.imshow("Frame w/ Labels", output_frame)
+        cv2.imshow("Frame", frame)
         key = cv2.waitKey(1) & 0xFF
 
         # if the `q` key was pressed, break from the loop
@@ -52,3 +88,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
