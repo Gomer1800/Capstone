@@ -3,7 +3,8 @@ import os
 import Core.PreProcessing.WithFaceDetect as FaceDetection
 import Core.PreProcessing.Subsystem as PreProcessor
 import Core.Camera.Subsystem as Camera
-import Core.PostProcessing.SubSystem as PostProcessing
+import Core.MaskDetection.SubSystem as MaskDetection
+from tensorflow.keras.models import load_model
 
 
 def main():
@@ -38,13 +39,11 @@ def main():
         faceNet=None
     )
 
-    postprocessor = PostProcessing.SubSystem()
-
     camera.initialize()
     preprocessor.initialize()
     face_detection.initialize(faceNet)
-    postprocessor.initialize()
-
+    masknet = load_model("mask_detector.model")
+    mask_detection = MaskDetection.SubSystem()
 
     while True:
         frame = camera.capture_image()
@@ -62,18 +61,17 @@ def main():
                 cv2.imshow("modified", modified)
                 prepared.append(modified)
 
+        #Mask Detection
+        predictions = []
+        mask_detection.runInference(prepared, predictions, masknet)
+
+
         # Drawing box around face location
         for box in locations:
-            # will make a box around face not mask area because these are Kenneth's coordinates
             (startX, startY, endX, endY) = box
 
-            # Post-Processing Module
-            #       1) will always yield green box because mask > noMask; probability = 100% mask
-            #       2) switch tuple to (0, 1) if testing mask < noMask (red box); probability = 100% no mask
-            #       3) to test probability reading, play with different numbers in tuple
-            #          ie. (0.38, 0.62) -> probability = 62% no mask
-            postprocessing = PostProcessing.SubSystem()
-            output_frame = postprocessing.prepareOutputFrame(frame, (0, 1), startX, startY, endX, endY)
+            color = (0, 255, 0)  # GREEN outline
+            cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
 
         cv2.imshow("Frame", frame)
         key = cv2.waitKey(1) & 0xFF
@@ -88,4 +86,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
