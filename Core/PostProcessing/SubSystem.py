@@ -1,29 +1,46 @@
-# import cv2
-
+import cv2
 
 class SubSystem:
     def __init__(self):
-        # TODO(Luis): this needs more information
-        pass
+        # TODO(Jett): this needs more information
+        self.frame = None
+        self.output = None
+        self.mask = None
+        self.noMask = None
+        self.startX = None
+        self.startY = None
+        self.endX = None
+        self.endY = None
 
     def initialize(self):
-        print("Hello this is the MaskDetection subsystem")
+        print("Hello this is the postprocessor subsystem")
 
-    # TODO(Luis):We need information on what kind of functions this subsystem will have
+    def makeLabel(self, detection):
+        mask = detection[0]
+        noMask = detection[1]
+        label = "Mask" if mask > noMask else "No Mask"
+        return label
 
+    def determineLabelColor(self, label):
+        color = (0, 255, 0) if label == "Mask" else (0, 0, 255)
+        return color
 
-"""
-def main(frame):
-    # Inputs: Leak Detection Status, Image Data, Mask Wear Evaluation
-    # Output: Image that can be displayed by the monitor
+    def probability(self, label, detection):
+        mask = detection[0]
+        noMask = detection[1]
+        finalLabel = "{}: {:.2f}%".format(label, max(mask, noMask) * 100)
+        return finalLabel
 
-    while True:
-        cv2.imshow("Frame", frame)
-        key = cv2.waitKey(1) & 0xFF
+    def integrate(self, frame, label, color, startX, startY, endX, endY):
+        cv2.putText(frame, label, (startX, startY - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+        cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
 
-        if key == ord("q"):
-            break
+    def prepareOutputFrame(self, frame, detection, startX, startY, endX, endY):
+        label = self.makeLabel(detection)
+        color = self.determineLabelColor(label)
+        finalLabel = self.probability(label, detection)
+        self.integrate(frame, finalLabel, color, startX, startY, endX, endY)
+        return self.output
 
-    cv2.destroyAllWindows()
-"""
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
