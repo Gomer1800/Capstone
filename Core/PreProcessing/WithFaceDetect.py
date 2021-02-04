@@ -58,11 +58,9 @@ class Subsystem:
             # greater than the minimum confidence, Adrian Rosebrock default confidence = 0.5
             if confidence > 0.5:
                 (startX, startY, endX, endY) = self.computeFaceBox(detections, i)
+                cropped_face = self.frame[startY:endY, startX:endX]
 
-                face = Preprocessor.Subsystem(self.frame[startY:endY, startX:endX])
-                face.prepareFace()
-
-                faces.append(face.modified)
+                faces.append(cropped_face)
                 locations.append((startX, startY, endX, endY))
 
         return faces, locations

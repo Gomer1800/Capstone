@@ -41,6 +41,15 @@ def main():
         face_detection.setFrame(frame)
         faces, locations = face_detection.runFaceDetect()
 
+        # Pre Process Module
+        prepared = []
+        if len(faces) > 0:
+            for face in faces:
+                preprocessor.setFrame(face)
+                modified = preprocessor.prepareFace()
+                cv2.imshow("modified", modified)
+                prepared.append(modified)
+
         # Drawing box around face location
         for box in locations:
             (startX, startY, endX, endY) = box
