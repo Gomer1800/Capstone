@@ -1,29 +1,37 @@
-from tensorflow.keras.models import Model
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
 import numpy as np
-import argparse
-import cv2
-import os
+
 
 class SubSystem:
     # inputs:    preprocessed image data: image frame
     # outputs:   mask detection status: flag
     #            image data: xy coordinates of mask
-    def __init__(self, face, maskStatus):
-        self.face = face
-        self.maskStatus = maskStatus
+    def __init__(self):
+        pass
 
     def initialize(self):
         print("Hello this is the MaskDetection subsystem")
 
+    # takes in an array of faces and converts them into an np array for prediction
+    def convertFacestoNPArray(self):
+        self.faces = np.array(self.faces, dtype="float32")
+
+    # applies mask prediction method on an np array and returns a list of predictions
+    # format of each prediction should be (mask, withoutMask)
     def prediction(self, maskModel):
-        self.maskStatus = maskModel.predict(self.face)[0]
+        self.predictions = maskModel.predict(self.faces, batch_size=32)
 
-    #       pass the face through the model to determine if the face
-    # 		has a mask or not
-    # 		(mask, withoutMask) = model.predict(face)[0]
+    def printMaskPrediction(self):
+        for pred in self.predictions:
+            if pred[0] > pred[1]:
+                print("Mask")
+            else:
+                print("No Mask")
 
-    # i dont think need this
-    def statusUpdate(self):
+    # performs all of maskDetection functions
+    def runInference(self, faces, predictions, maskModel):
+        self.faces = faces
+        self.predictions = predictions
+        self.convertFacestoNPArray()
+        self.prediction(maskModel)
+        self.printMaskPrediction()
