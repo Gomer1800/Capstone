@@ -4,9 +4,15 @@
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
 import Core.Camera.Subsystem as Camera
-import Core.PreProcessing.Subsystem as Preprocessor
+import Core.PreProcessing.Subsystem as PreProcessor
+import Core.PreProcessing.WithFaceDetect as FaceDetection
 import Core.MaskDetection.SubSystem as MaskDetection
 import Core.PostProcessing.SubSystem as Postprocessor
+
+import cv2
+import os
+
+from tensorflow.keras.models import load_model
 
 # def print_hi(name):
 # Use a breakpoint in the code line below to debug your script.
@@ -23,31 +29,83 @@ if __name__ == '__main__':
     nextState = "PRE"
     loop = True
 
+    camera = None
+    preprocessor = None
+    face_detection = None
+    mask_detection = None
+    postprocessor = None
+
+    frame = None
+    prepared = None
+    masknet = None
+
     while loop is True:
         if presentState == "INIT":
+            # TODO(LUIS): Put all the model setup logic in a function, encapsulate it
+
+            masknet = load_model("mask_detector.model")
+
+            prototxtPath = os.path.sep.join(["..",
+                                             "PreProcessing",
+                                             "face_detector",
+                                             "deploy.prototxt"])
+
+            weightsPath = os.path.sep.join(["..",
+                                            "PreProcessing",
+                                            "face_detector",
+                                            "res10_300x300_ssd_iter_140000.caffemodel"])
+
+            faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
+
             camera = Camera.Subsystem(
                 type=None,
                 name=None,
                 camera_path=None,
                 storage_path=None
             )
-            preprocessor = Preprocessor.Subsystem(frame=None)
-            maskDetector = MaskDetection.SubSystem(face=None)
+            preprocessor = PreProcessor.Subsystem(
+                frame=None
+            )
+            face_detection = FaceDetection.Subsystem(
+                frame=None,
+                height=None,
+                width=None,
+                blob=None,
+                faceNet=None
+            )
+            mask_detection = MaskDetection.SubSystem()
             postprocessor = Postprocessor.SubSystem()
 
             camera.initialize()
             preprocessor.initialize()
-            maskDetector.initialize()
+            face_detection.initialize(faceNet)
+            mask_detection.initialize()
+
             nextState = "CAM"
 
-        elif presentState == "PRE":
-            nextState = "MASK"
+        elif presentState == "CAM":
+            frame = camera.capture_image()
+            nextState = "PRE"
 
-        elif presentState == "PRE":
+        elif presentState == "PRE":  # Face Detection Module
             # TODO(Luis):there will be a split in the control flow to jump to Postprocessing early
+            face_detection.setFrame(frame)
+            faces, locations = face_detection.runFaceDetect()
+
+            # Pre Process Module
+            prepared = []
+            if len(faces) > 0:
+                for face in faces:
+                    preprocessor.setFrame(face)
+                    modified = preprocessor.prepareFace()
+                    cv2.imshow("modified", modified)
+                    prepared.append(modified)
             nextState = "MASK"
 
         elif presentState == "MASK":
+            # Mask Detection
+            predictions = []
+            mask_detection.runInference(prepared, predictions, masknet)
             nextState = "LEAK"
 
         elif presentState == "LEAK":
