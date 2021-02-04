@@ -64,3 +64,4 @@ class Subsystem:
                 locations.append((startX, startY, endX, endY))
 
         return faces, locations
+
