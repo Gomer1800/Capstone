@@ -6,21 +6,27 @@ import Core.PreProcessing.Subsystem as Preprocessor
 class Subsystem:
     # input: frame, faceNet
     # output: array of faces and array of corresponding x,y box of faces
-    def __init__(self, frame, faceNet):
+    def __init__(self, frame, height, width, blob, faceNet):
         # Attributes
+        self.frame = frame
+        self.height = height
+        self.width = width
+        self.blob = blob
+        self.faceNet = faceNet
+
+    # Functions relevant to face detection module
+    def initialize(self, faceNet):
+        print("Hello this is the FaceDetection subsystem")
+        self.faceNet = faceNet
+
+    def setFrame(self, frame):
         self.frame = frame
         self.height = frame.shape[0]
         self.width = frame.shape[1]
         self.blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300), (104.0, 177.0, 123.0))
-        self.faceNet = faceNet
 
-        # output
-        self.faces = []
-        self.locations = []
-
-    # Functions relevant to face detection module
-    def obtainFaceDetects(self):
-        self.faceNet.setInput(self.blob)
+    def obtainFaceDetects(self, blob):
+        self.faceNet.setInput(blob)
         detections = self.faceNet.forward()
         return detections
 
@@ -36,14 +42,11 @@ class Subsystem:
         (endX, endY) = (min(self.width - 1, endX), min(self.height - 1, endY))
         return (startX, startY, endX, endY)
 
-    def addFace(self, face):
-        self.faces.append(face)
-
-    def addLocations(self, startX, startY, endX, endY):
-        self.locations.append((startX, startY, endX, endY))
-
     def runFaceDetect(self):
-        detections = self.obtainFaceDetects()
+        detections = self.obtainFaceDetects(self.blob)
+
+        faces = []
+        locations = []
 
         # loop over the detections
         for i in range(0, detections.shape[2]):
@@ -59,7 +62,7 @@ class Subsystem:
                 face = Preprocessor.Subsystem(self.frame[startY:endY, startX:endX])
                 face.prepareFace()
 
-                self.addFace(face.modified)
-                self.addLocations(startX, startY, endX, endY)
+                faces.append(face.modified)
+                locations.append((startX, startY, endX, endY))
 
-        return self.faces, self.locations
+        return faces, locations
