@@ -6,9 +6,16 @@ import Core.Camera.Subsystem as Camera
 
 
 def main():
-    prototxtPath = os.path.sep.join(["face_detector", "deploy.prototxt"])
-    weightsPath = os.path.sep.join(["face_detector",
+    prototxtPath = os.path.sep.join(["..",
+                                     "PreProcessing",
+                                     "face_detector",
+                                     "deploy.prototxt"])
+
+    weightsPath = os.path.sep.join(["..",
+                                    "PreProcessing",
+                                    "face_detector",
                                     "res10_300x300_ssd_iter_140000.caffemodel"])
+
     faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 
     camera = Camera.Subsystem(
