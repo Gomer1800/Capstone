@@ -35,3 +35,4 @@ class SubSystem:
         self.convertFacestoNPArray()
         self.prediction(maskModel)
         self.printMaskPrediction()
+        return self.predictions
