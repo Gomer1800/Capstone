@@ -3,14 +3,14 @@ import numpy as np
 import Core.PreProcessing.Subsystem as Preprocessor
 
 
-class FaceDetect:
+class Subsystem:
     # input: frame, faceNet
     # output: array of faces and array of corresponding x,y box of faces
     def __init__(self, frame, faceNet):
         # Attributes
         self.frame = frame
-        self.height = frame[0]
-        self.width = frame[1]
+        self.height = frame.shape[0]
+        self.width = frame.shape[1]
         self.blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300), (104.0, 177.0, 123.0))
         self.faceNet = faceNet
 
@@ -42,7 +42,7 @@ class FaceDetect:
     def addLocations(self, startX, startY, endX, endY):
         self.locations.append((startX, startY, endX, endY))
 
-    def runFaceDetect(self, args):
+    def runFaceDetect(self):
         detections = self.obtainFaceDetects()
 
         # loop over the detections
@@ -52,8 +52,8 @@ class FaceDetect:
             confidence = detections[0, 0, i, 2]
 
             # filter out weak detections by ensuring the confidence is
-            # greater than the minimum confidence
-            if confidence > args["confidence"]:
+            # greater than the minimum confidence, Adrian Rosebrock default confidence = 0.5
+            if confidence > 0.5:
                 (startX, startY, endX, endY) = self.computeFaceBox(detections, i)
 
                 face = Preprocessor.Subsystem(self.frame[startY:endY, startX:endX])
@@ -61,3 +61,5 @@ class FaceDetect:
 
                 self.addFace(face.modified)
                 self.addLocations(startX, startY, endX, endY)
+
+        return self.faces, self.locations
