@@ -118,8 +118,6 @@ if __name__ == '__main__':
             nextState = "POST"
 
         elif presentState == "POST":
-            print("printing pred outside")
-            print(predictions)
             for (box, pred) in zip(locations, predictions):
                 (mask, withoutMask) = pred
                 # will make a box around face not mask area because these are Kenneth's coordinates
@@ -130,8 +128,6 @@ if __name__ == '__main__':
                 #       2) switch tuple to (0, 1) if testing mask < noMask (red box); probability = 100% no mask
                 #       3) to test probability reading, play with different numbers in tuple
                 #          ie. (0.38, 0.62) -> probability = 62% no mask
-                print("printing pred inside")
-                print(pred)
                 output_frame = postprocessor.prepareOutputFrame(frame,
                                                                 (pred[0], pred[1]),
                                                                 startX,
