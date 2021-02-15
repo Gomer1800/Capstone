@@ -10,7 +10,6 @@ class Subsystem:
     def __init__(self, frame):
         # Attributes
         self.frame = frame
-        self.modified = frame
 
     # Functions relevant to Pre_Processing module
     def initialize(self):
@@ -18,27 +17,30 @@ class Subsystem:
 
     def setFrame(self, frame):
         self.frame = frame
-        self.modified = frame
 
-    def cvtToRGB(self):
-        self.modified = cv2.cvtColor(self.modified, cv2.COLOR_BGR2RGB)
-        return self.modified
+    def cvtToRGB(self, frame):
+        modified = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        return modified
 
-    def resize(self, newW, newH):
-        self.modified = cv2.resize(self.modified, (newW, newH))
-        return self.modified
+    def cvtToGRAY(self, frame):
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        return gray
 
-    def imgToArr(self):
-        self.modified = img_to_array(self.modified)
-        return self.modified
+    def resize(self, frame, newW, newH):
+        modified = cv2.resize(frame, (newW, newH))
+        return modified
 
-    def encode(self):
-        self.modified = preprocess_input(self.modified)
-        return self.modified
+    def imgToArr(self, frame):
+        modified = img_to_array(frame)
+        return modified
+
+    def encode(self, frame):
+        modified = preprocess_input(frame)
+        return modified
 
     def prepareFace(self):
-        self.cvtToRGB()
-        self.resize(224, 224)
-        self.imgToArr()
-        self.encode()
-        return self.modified
+        mod = self.cvtToRGB(self.frame)
+        mod = self.resize(mod, 224, 224)
+        mod = self.imgToArr(mod)
+        mod = self.encode(mod)
+        return mod
