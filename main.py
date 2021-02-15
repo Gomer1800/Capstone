@@ -111,7 +111,7 @@ if __name__ == '__main__':
             if len(prepared) > 0:
                 predictions = []
                 predictions = mask_detection.runInference(prepared, predictions, masknet)
-                nextState = "LEAK"
+            nextState = "LEAK"
 
         elif presentState == "LEAK":
             nextState = "FACE"
