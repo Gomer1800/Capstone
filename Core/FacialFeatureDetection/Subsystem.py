@@ -59,6 +59,8 @@ class Subsystem:
                 new.append((startX, startY, endX, endY))
         return new
 
+    # Takes in the grayscaled frame and a string that specifies which type of detection
+    # Returns an array of tuples [(startX, startY, endX, endY), ...]
     def cascade_detect(self, gray, facial_feat):
         rects = []
         endYscale = 0
