@@ -22,6 +22,9 @@ from tensorflow.keras.models import load_model
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    # TODO(LUIS): Use python arg parse in future to get arguments from command line for:
+    # camera type
+
     # FSM states, for linear control flow
     # TODO(Luis): we need to develop a FSM for parallelism
     states = ["INIT", "CAM", "PRE", "MASK", "LEAK", "FACE", "POST", "DISPLAY"]
@@ -61,7 +64,7 @@ if __name__ == '__main__':
             faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 
             camera = Camera.Subsystem(
-                type=None,
+                type="IP",  # "IP" for ip camera, "WEB" for web camera
                 name=None,
                 camera_path=None,
                 storage_path=None
