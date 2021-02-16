@@ -8,6 +8,7 @@ import Core.PreProcessing.Subsystem as PreProcessor
 import Core.PreProcessing.WithFaceDetect as FaceDetection
 import Core.MaskDetection.SubSystem as MaskDetection
 import Core.PostProcessing.SubSystem as Postprocessor
+import Core.FacialFeatureDetection.Subsystem as FacialFeatureDetection
 
 import cv2
 import os
@@ -107,8 +108,9 @@ if __name__ == '__main__':
 
         elif presentState == "MASK":
             # Mask Detection
-            predictions = []
-            predictions = mask_detection.runInference(prepared, predictions, masknet)
+            if len(prepared) > 0:
+                predictions = []
+                predictions = mask_detection.runInference(prepared, predictions, masknet)
             nextState = "LEAK"
 
         elif presentState == "LEAK":

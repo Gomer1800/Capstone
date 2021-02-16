@@ -61,10 +61,9 @@ def main():
                 cv2.imshow("modified", modified)
                 prepared.append(modified)
 
-        #Mask Detection
-        predictions = []
-        mask_detection.runInference(prepared, predictions, masknet)
-
+            # Mask Detection
+            predictions = []
+            mask_detection.runInference(prepared, predictions, masknet)
 
         # Drawing box around face location
         for box in locations:
