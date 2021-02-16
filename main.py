@@ -61,7 +61,7 @@ if __name__ == '__main__':
             faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 
             camera = Camera.Subsystem(
-                type="IP",  # "IP" for ip camera, "WEB" for web camera
+                type="WEB",  # "IP" for ip camera, "WEB" for web camera
                 name=None,
                 camera_path=None,
                 storage_path=None

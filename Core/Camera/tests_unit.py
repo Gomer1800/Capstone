@@ -27,7 +27,7 @@ def test_webcam():
 
 def test_ipcam():
     camera = Camera.Subsystem(
-        type="WEB",
+        type="IP",
         name=None,
         camera_path=None,
         storage_path=None
