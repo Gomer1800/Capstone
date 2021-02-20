@@ -12,16 +12,16 @@ class Subsystem:
         self.mouthCascade = mouthCascade
         self.noseCascade = noseCascade
 
-    def initialize(self):
+    def initialize(self, predictor, mouth_xml, nose_xml):
         self.detector = dlib.get_frontal_face_detector()
-        self.predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+        self.predictor = dlib.shape_predictor(predictor)
 
         # CASCADE STUFF
-        self.mouthCascade = cv2.CascadeClassifier('cascade-files/haarcascade_mcs_mouth.xml')
+        self.mouthCascade = cv2.CascadeClassifier(mouth_xml)
         if self.mouthCascade.empty():
             raise IOError('Unable to load the mouth cascade classifier xml file')
 
-        self.noseCascade = cv2.CascadeClassifier('cascade-files/haarcascade_mcs_nose.xml')
+        self.noseCascade = cv2.CascadeClassifier(nose_xml)
         if self.noseCascade.empty():
             raise IOError('Unable to load the nose cascade classifier xml file')
 
