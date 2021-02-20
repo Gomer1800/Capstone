@@ -37,6 +37,7 @@ if __name__ == '__main__':
     preprocessor = None
     face_detection = None
     mask_detection = None
+    facial_feat_detection = None
     postprocessor = None
 
     frame = None
@@ -63,8 +64,12 @@ if __name__ == '__main__':
 
             faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 
+            predictor_path = "Core/FacialFeatureDetection/shape_predictor_68_face_landmarks.dat"
+            mouth_xml = "Core/FacialFeatureDetection/cascade-files/haarcascade_mcs_mouth.xml"
+            nose_xml = "Core/FacialFeatureDetection/cascade-files/haarcascade_mcs_nose.xml"
+
             camera = Camera.Subsystem(
-                type="IP",  # "IP" for ip camera, "WEB" for web camera
+                type="WEB",  # "IP" for ip camera, "WEB" for web camera
                 name=None,
                 camera_path=None,
                 storage_path=None
@@ -80,12 +85,19 @@ if __name__ == '__main__':
                 faceNet=None
             )
             mask_detection = MaskDetection.SubSystem()
+            facial_feat_detection = FacialFeatureDetection.Subsystem(
+                detector=None,
+                predictor=None,
+                mouthCascade=None,
+                noseCascade=None
+            )
             postprocessor = Postprocessor.SubSystem()
 
             camera.initialize()
             preprocessor.initialize()
             face_detection.initialize(faceNet)
             mask_detection.initialize()
+            facial_feat_detection.initialize(predictor_path, mouth_xml, nose_xml)
             postprocessor.initialize()
 
             nextState = "CAM"
@@ -120,6 +132,10 @@ if __name__ == '__main__':
             nextState = "FACE"
 
         elif presentState == "FACE":
+            gray = preprocessor.cvtToGRAY(frame)
+            shape = facial_feat_detection.detect_facial_landmarks(gray)
+            mouth_rects = facial_feat_detection.cascade_detect(gray, "mouth")
+            nose_rects = facial_feat_detection.cascade_detect(gray, "nose")
             nextState = "POST"
 
         elif presentState == "POST":
