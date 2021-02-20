@@ -19,8 +19,12 @@ def main():
 
     faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 
+    predictor_path = "shape_predictor_68_face_landmarks.dat"
+    mouth_xml = "cascade-files/haarcascade_mcs_mouth.xml"
+    nose_xml = "cascade-files/haarcascade_mcs_nose.xml"
+
     camera = Camera.Subsystem(
-        type=None,
+        type="WEB",
         name=None,
         camera_path=None,
         storage_path=None
@@ -48,7 +52,7 @@ def main():
     camera.initialize()
     preprocessor.initialize()
     face_detection.initialize(faceNet)
-    facial_feat_detection.initialize()
+    facial_feat_detection.initialize(predictor_path, mouth_xml, nose_xml)
 
     while True:
         frame = camera.capture_image()
