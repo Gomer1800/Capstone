@@ -57,6 +57,8 @@ def main():
                 cv2.imshow("modified", modified)
                 prepared.append(modified)
 
+
+
         # Drawing box around face location
         for box in locations:
             (startX, startY, endX, endY) = box
