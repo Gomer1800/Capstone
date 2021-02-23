@@ -21,7 +21,7 @@ def main():
     faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 
     camera = Camera.Subsystem(
-        type=None,
+        type='WEB',
         name=None,
         camera_path=None,
         storage_path=None
@@ -67,10 +67,14 @@ def main():
 
         # Drawing box around face location
         for box in locations:
+            # first get the coordinates from the face
             (startX, startY, endX, endY) = box
 
-            color = (0, 255, 0)  # GREEN outline
-            cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+            # resize the face coordinates to get mask ROI
+            nstartX, nstartY, nendX, nendY = mask_detection.faceCoordsToMaskROI(startX, startY, endX, endY)
+
+            # display mask ROI if mask is detected
+            mask_detection.detectionBox(frame, nstartX, nstartY, nendX,nendY)
 
         cv2.imshow("Frame", frame)
         key = cv2.waitKey(1) & 0xFF

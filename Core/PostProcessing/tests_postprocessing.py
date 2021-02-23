@@ -20,7 +20,7 @@ def main():
     faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 
     camera = Camera.Subsystem(
-        type=None,
+        type='WEB',
         name=None,
         camera_path=None,
         storage_path=None
@@ -44,7 +44,6 @@ def main():
     preprocessor.initialize()
     face_detection.initialize(faceNet)
     postprocessor.initialize()
-
 
     while True:
         frame = camera.capture_image()
@@ -73,7 +72,7 @@ def main():
             #       3) to test probability reading, play with different numbers in tuple
             #          ie. (0.38, 0.62) -> probability = 62% no mask
             postprocessing = PostProcessing.SubSystem()
-            output_frame = postprocessing.prepareOutputFrame(frame, (0, 1), startX, startY, endX, endY)
+            output_frame = postprocessing.prepareOutputFrame(frame, (0.69, 0.31), startX, startY, endX, endY)
 
         cv2.imshow("Frame", frame)
         key = cv2.waitKey(1) & 0xFF

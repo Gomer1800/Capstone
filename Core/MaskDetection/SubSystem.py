@@ -1,5 +1,6 @@
 from tensorflow.keras.models import load_model
 import numpy as np
+import cv2
 
 
 class SubSystem:
@@ -36,3 +37,17 @@ class SubSystem:
         self.prediction(maskModel)
         self.printMaskPrediction()
         return self.predictions
+
+    def faceCoordsToMaskROI(self, startX, startY, endX, endY):
+        # couldn't find any example code that bounded facial features so just gonna resize the
+        # face detection coordinates as a start
+
+        return startX, startY + 55, endX, endY
+
+    def detectionBox(self, frame, startX, startY, endX, endY):
+        color = (0, 255, 0)  # GREEN outline if mask is detected
+        for pred in self.predictions:
+            if pred[0] > pred[1]:
+                cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+            else:
+                continue
