@@ -1,11 +1,14 @@
 class Subsystem:
     # inputs: mask ROI, facial feature points, nose_rects and mouth_rects (kenneths new facial feature detection)
     # outputs:
-    def __init__(self, noseflag, mouthflag, numDots, shapeflag):
+    def __init__(self, noseflag, mouthflag, shapeflag, numDots=0):
         self.noseflag = noseflag
         self.mouthflag = mouthflag
-        self.numDots = numDots
         self.shapeflag = shapeflag
+        self.numDots = numDots
+
+    def initialize(self):
+        print("Hello this is the mask-evaluation subsystem")
 
     # takes in the list of nose rectangles and mouth rectangles
     # outputs a flag value depending on if nose rect or mouth rect is detected
@@ -40,7 +43,7 @@ class Subsystem:
     # if none detected it goes to see comparing mask roi with facial feature points
     # outputs percentage of nose and mouth is covered
     def mask_evaluation(self, nose_rects, mouth_rects, shape):
-        #, mask_roi, face_pts
+        # , mask_roi, face_pts
         self.mouth_nose_detection(nose_rects, mouth_rects, shape)
         # else:
         #     self.compare_mask_face(mask_roi, face_pts)
