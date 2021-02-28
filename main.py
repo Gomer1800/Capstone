@@ -9,6 +9,7 @@ import Core.PreProcessing.WithFaceDetect as FaceDetection
 import Core.MaskDetection.SubSystem as MaskDetection
 import Core.PostProcessing.SubSystem as Postprocessor
 import Core.FacialFeatureDetection.Subsystem as FacialFeatureDetection
+import Core.MaskEvaluate.Subsystem as MaskEvaluate
 
 import cv2
 import os
@@ -33,17 +34,26 @@ if __name__ == '__main__':
     nextState = "CAM"
     loop = True
 
+    # Subsystems
     camera = None
     preprocessor = None
     face_detection = None
     mask_detection = None
+    facial_feat_detection = None
+    mask_eval = None
     postprocessor = None
 
+    # Data
+    # TODO(LUIS): Find a way to not have to do this
     frame = None
     prepared = None
     masknet = None
     predictions = None
     locations = None
+    shape = None
+    mouth_rects = None
+    nose_rects = None
+    facial_feature_flags = [1, 1, 1]
 
     while loop is True:
         if presentState == "INIT":
@@ -63,8 +73,12 @@ if __name__ == '__main__':
 
             faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 
+            predictor_path = "Core/FacialFeatureDetection/shape_predictor_68_face_landmarks.dat"
+            mouth_xml = "Core/FacialFeatureDetection/cascade-files/haarcascade_mcs_mouth.xml"
+            nose_xml = "Core/FacialFeatureDetection/cascade-files/haarcascade_mcs_nose.xml"
+
             camera = Camera.Subsystem(
-                type="IP",  # "IP" for ip camera, "WEB" for web camera
+                type="WEB",  # "IP" for ip camera, "WEB" for web camera
                 name=None,
                 camera_path=None,
                 storage_path=None
@@ -80,12 +94,25 @@ if __name__ == '__main__':
                 faceNet=None
             )
             mask_detection = MaskDetection.SubSystem()
+            facial_feat_detection = FacialFeatureDetection.Subsystem(
+                detector=None,
+                predictor=None,
+                mouthCascade=None,
+                noseCascade=None
+            )
+            mask_eval = MaskEvaluate.Subsystem(
+                noseflag=None,
+                mouthflag=None,
+                shapeflag=None
+            )
             postprocessor = Postprocessor.SubSystem()
 
             camera.initialize()
             preprocessor.initialize()
             face_detection.initialize(faceNet)
             mask_detection.initialize()
+            facial_feat_detection.initialize(predictor_path, mouth_xml, nose_xml)
+            mask_eval.initialize()
             postprocessor.initialize()
 
             nextState = "CAM"
@@ -120,9 +147,22 @@ if __name__ == '__main__':
             nextState = "FACE"
 
         elif presentState == "FACE":
+            # Facial Feature Detection
+            # TODO(LUIS): Add logic to handle no face detected so we dont waste cycles
+            gray = preprocessor.cvtToGRAY(frame)
+            shape = facial_feat_detection.detect_facial_landmarks(gray)
+            mouth_rects = facial_feat_detection.cascade_detect(gray, "mouth")
+            nose_rects = facial_feat_detection.cascade_detect(gray, "nose")
+            # Mask Evaluation
+            mask_eval.mask_evaluation(nose_rects, mouth_rects, shape)
             nextState = "POST"
 
         elif presentState == "POST":
+            # TODO(LUIS): This array should be maintained by the mask eval subsystem
+            facial_feature_flags = [mask_eval.noseflag,
+                                    mask_eval.mouthflag,
+                                    mask_eval.shapeflag]
+
             for (box, pred) in zip(locations, predictions):
                 (mask, withoutMask) = pred
                 # will make a box around face not mask area because these are Kenneth's coordinates
@@ -137,7 +177,11 @@ if __name__ == '__main__':
                                                                 (pred[0], pred[1]),
                                                                 startX,
                                                                 startY,
-                                                                endX, endY)
+                                                                endX, endY,
+                                                                shape,
+                                                                mouth_rects,
+                                                                nose_rects,
+                                                                facial_feature_flags)
             nextState = "DISPLAY"
 
         elif presentState == "DISPLAY":

@@ -4,6 +4,7 @@ import Core.PreProcessing.WithFaceDetect as FaceDetection
 import Core.PreProcessing.Subsystem as PreProcessor
 import Core.Camera.Subsystem as Camera
 import Core.FacialFeatureDetection.Subsystem as FacialFeatureDetection
+import Core.MaskEvaluate.Subsystem as MaskEvaluate
 
 
 def main():
@@ -19,9 +20,9 @@ def main():
 
     faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 
-    predictor_path = "shape_predictor_68_face_landmarks.dat"
-    mouth_xml = "cascade-files/haarcascade_mcs_mouth.xml"
-    nose_xml = "cascade-files/haarcascade_mcs_nose.xml"
+    predictor_path = "../FacialFeatureDetection/shape_predictor_68_face_landmarks.dat"
+    mouth_xml = "../FacialFeatureDetection/cascade-files/haarcascade_mcs_mouth.xml"
+    nose_xml = "../FacialFeatureDetection/cascade-files/haarcascade_mcs_nose.xml"
 
     camera = Camera.Subsystem(
         type="WEB",
@@ -47,6 +48,14 @@ def main():
         predictor=None,
         mouthCascade=None,
         noseCascade=None
+    )
+
+    faceDots = 0
+    mask_eval = MaskEvaluate.Subsystem(
+        noseflag=None,
+        mouthflag=None,
+        numDots=faceDots,
+        shapeflag=None
     )
 
     camera.initialize()
@@ -89,6 +98,15 @@ def main():
         if len(mouth_rects) > 0:
             for (startX, startY, endX, endY) in mouth_rects:
                 cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 1)
+
+        # Test if mask evaluation is working
+        mask_eval.mask_evaluation(nose_rects, mouth_rects, shape)
+        if mask_eval.noseflag == 0:
+            print("Nose detected. Please cover up your nose.")
+        if mask_eval.mouthflag == 0:
+            print("Mouth detected. Please cover up your mouth.")
+        if mask_eval.shapeflag == 0:
+            print("Facial points detected.")
 
         # Drawing box around face location
         # for box in locations:

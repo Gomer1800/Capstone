@@ -40,10 +40,39 @@ class SubSystem:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
         cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
 
-    def prepareOutputFrame(self, frame, detection, startX, startY, endX, endY):
+    def prepareOutputFrame(self,
+                           frame, detection, startX, startY, endX, endY,  # Mask Detection
+                           shape, mouth_rects, nose_rects, facial_feature_flags  # Facial Feature Detection
+                           ):
+        # Mask Detection
         label = self.makeLabel(detection)
         color = self.determineLabelColor(label)
         finalLabel = self.probability(label, detection)
+
+        # Facial Feature Detection
+        # Draw facial feature dots
+        if len(shape) > 0:
+            for (x, y) in shape:
+                cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
+
+        # Draw nose and mouth using haar cascade
+        if len(nose_rects) > 0:
+            for (nose_startX, nose_startY, nose_endX, nose_endY) in nose_rects:
+                cv2.rectangle(frame, (nose_startX, nose_startY), (nose_endX, nose_endY), (0, 255, 0), 1)
+
+        if len(mouth_rects) > 0:
+            for (mouth_startX, mouth_startY, mouth_endX, mouth_endY) in mouth_rects:
+                cv2.rectangle(frame, (mouth_startX, mouth_startY), (mouth_endX, mouth_endY), (0, 255, 0), 1)
+
+        # Output Frame
+        # TODO(LUIS): Annotate these in the image?
+        if facial_feature_flags[0] == 0:
+            print("\tNose detected. Please cover up your nose.")
+        if facial_feature_flags[1] == 0:
+            print("\tMouth detected. Please cover up your mouth.")
+        if facial_feature_flags[2] == 0:
+            print("\tFacial points detected.")
+
         self.setOutput(frame)
         self.integrate(self.output, finalLabel, color, startX, startY, endX, endY)
         return self.output
