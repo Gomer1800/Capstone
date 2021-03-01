@@ -11,20 +11,31 @@ import Core.PostProcessing.SubSystem as Postprocessor
 import Core.FacialFeatureDetection.Subsystem as FacialFeatureDetection
 import Core.MaskEvaluate.Subsystem as MaskEvaluate
 
+import argparse
 import cv2
 import os
 
 from tensorflow.keras.models import load_model
 
-# def print_hi(name):
+
 # Use a breakpoint in the code line below to debug your script.
-# print(f'Hi this is a test, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
 # Press the green button in the gutter to run the script.
+
+def init_argparse():
+    parser = argparse.ArgumentParser(
+        description="Mask efficacy evaluation system.",
+        allow_abbrev=False)
+    parser.add_argument('-camera',
+                        required=True,
+                        choices=['WEB', 'IP'],
+                        help="Select camera type: 'WEB' for web-cam or 'IP' for ip-camera.")
+    return parser
+
+
 if __name__ == '__main__':
-    # TODO(LUIS): Use python arg parse in future to get arguments from command line for:
-    # camera type
+
+    arg_parser = init_argparse()
+    options = arg_parser.parse_args()
 
     # FSM states, for linear control flow
     # TODO(Luis): we need to develop a FSM for parallelism
@@ -78,7 +89,7 @@ if __name__ == '__main__':
             nose_xml = "Core/FacialFeatureDetection/cascade-files/haarcascade_mcs_nose.xml"
 
             camera = Camera.Subsystem(
-                type="WEB",  # "IP" for ip camera, "WEB" for web camera
+                type=options.camera,  # "IP" for ip camera, "WEB" for web camera
                 name=None,
                 camera_path=None,
                 storage_path=None
