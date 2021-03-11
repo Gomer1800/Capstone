@@ -247,4 +247,60 @@ if __name__ == '__main__':
 
         presentState = nextState
 
+    # Plot data, follow this guide https://pythonforundergradengineers.com/python-matplotlib-error-bars.html
+    # enter raw data
+    cam = timing_dict["CAM"]
+    pre = timing_dict["PRE"]
+    mask = timing_dict["MASK"]
+    face = timing_dict["FACE"]
+    post = timing_dict["POST"]
+
+    # calculate averages
+    cam_mean = np.mean(cam)
+    pre_mean = np.mean(pre)
+    mask_mean = np.mean(mask)
+    face_mean = np.mean(face)
+    post_mean = np.mean(post)
+
+    # calculate standard deviation
+    cam_std = np.std(cam)
+    pre_std = np.std(pre)
+    mask_std = np.std(mask)
+    face_std = np.std(face)
+    post_std = np.std(post)
+
+    # create lists for plots
+    subsystems = [
+        'Camera',
+        'Pre-Processing',
+        'Mask Detection',
+        'Facial Feature Detection',
+        'Post-Processing']
+    x_pos = np.arange(len(subsystems))
+    means = [
+        cam_mean,
+        pre_mean,
+        mask_mean,
+        face_mean,
+        post_mean]
+    error = [
+        cam_std,
+        pre_std,
+        mask_std,
+        face_std,
+        post_std]
+
+    # Build the plot
+    fig, ax = plt.subplots()
+    ax.bar(x_pos, means, yerr=error, align='center', alpha=0.5, ecolor='black', capsize=10)
+    ax.set_ylabel('Time (seconds)')
+    ax.set_xticks(x_pos)
+    ax.set_xticklabels(subsystems)
+    ax.set_title('Timing Performance of Subsystems')
+    ax.yaxis.grid(True)
+
+    # Save the figure and show
+    plt.tight_layout()
+    plt.savefig('bar_plot_with_error_bars.png')
+    plt.show()
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
