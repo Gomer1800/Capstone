@@ -13,6 +13,7 @@ import Core.MaskEvaluate.Subsystem as MaskEvaluate
 
 import cv2
 import os
+import time
 
 from tensorflow.keras.models import load_model
 
@@ -28,7 +29,7 @@ if __name__ == '__main__':
 
     # FSM states, for linear control flow
     # TODO(Luis): we need to develop a FSM for parallelism
-    states = ["INIT", "CAM", "PRE", "MASK", "LEAK", "FACE", "POST", "DISPLAY"]
+    states = ["INIT", "CAM", "PRE", "MASK", "LEAK", "FACE", "POST", "DISPLAY", "SHUTDOWN"]
 
     presentState = "INIT"
     nextState = "CAM"
@@ -54,6 +55,21 @@ if __name__ == '__main__':
     mouth_rects = None
     nose_rects = None
     facial_feature_flags = [1, 1, 1]
+
+    # Timing Data
+    # Dictionary where keys correspond to subsystems and value is an array of timing data
+    # where the index corresponds to a given cycle or image taken
+    # TODO(LUIS): Add num_cycles to arg parser branch
+    NUM_CYCLE = 100
+    # TODO(LUIS): When LEAK detection is implement, add timing data to dictionary
+    timing_dict = {
+        "CAM": NUM_CYCLE * [-1.0],
+        "PRE": NUM_CYCLE * [-1.0],
+        "MASK": NUM_CYCLE * [-1.0],
+        "FACE": NUM_CYCLE * [-1.0],
+        "POST": NUM_CYCLE * [-1.0],
+    }
+    cycle_counter = 0
 
     while loop is True:
         if presentState == "INIT":
@@ -118,10 +134,17 @@ if __name__ == '__main__':
             nextState = "CAM"
 
         elif presentState == "CAM":
+            # start clock
+            start = time.time()
             frame = camera.capture_image()
+            # stop clock
+            end = time.time()
+            # record timing data
+            timing_dict[presentState][cycle_counter] = end - start
             nextState = "PRE"
 
         elif presentState == "PRE":  # Face Detection Module
+            start = time.time()
             # TODO(Luis):there will be a split in the control flow to jump to Postprocessing early
             face_detection.setFrame(frame)
             faces, locations = face_detection.runFaceDetect()
@@ -134,19 +157,26 @@ if __name__ == '__main__':
                     modified = preprocessor.prepareFace()
                     cv2.imshow("modified", modified)
                     prepared.append(modified)
+
+            end = time.time()
+            timing_dict[presentState][cycle_counter] = end - start
             nextState = "MASK"
 
         elif presentState == "MASK":
+            start = time.time()
             # Mask Detection
             if len(prepared) > 0:
                 predictions = []
                 predictions = mask_detection.runInference(prepared, predictions, masknet)
+            end = time.time()
+            timing_dict[presentState][cycle_counter] = end - start
             nextState = "LEAK"
 
         elif presentState == "LEAK":
             nextState = "FACE"
 
         elif presentState == "FACE":
+            start = time.time()
             # Facial Feature Detection
             # TODO(LUIS): Add logic to handle no face detected so we dont waste cycles
             gray = preprocessor.cvtToGRAY(frame)
@@ -155,9 +185,13 @@ if __name__ == '__main__':
             nose_rects = facial_feat_detection.cascade_detect(gray, "nose")
             # Mask Evaluation
             mask_eval.mask_evaluation(nose_rects, mouth_rects, shape)
+
+            end = time.time()
+            timing_dict[presentState][cycle_counter] = end - start
             nextState = "POST"
 
         elif presentState == "POST":
+            start = time.time()
             # TODO(LUIS): This array should be maintained by the mask eval subsystem
             facial_feature_flags = [mask_eval.noseflag,
                                     mask_eval.mouthflag,
@@ -182,17 +216,29 @@ if __name__ == '__main__':
                                                                 mouth_rects,
                                                                 nose_rects,
                                                                 facial_feature_flags)
+
+            end = time.time()
+            timing_dict[presentState][cycle_counter] = end - start
             nextState = "DISPLAY"
 
         elif presentState == "DISPLAY":
-            while True:
-                cv2.imshow("Frame", frame)
-                key = cv2.waitKey(1) & 0xFF
+            cv2.imshow("Frame", frame)
 
-                # if the `q` key was pressed, break from the loop
-                if key == ord("q"):
-                    break
-            nextState = "CAM"
+            # if the `q` key was pressed, break from the loop
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord("q"):
+                break
+
+            cycle_counter += 1
+            if cycle_counter == NUM_CYCLE:
+                nextState = "SHUTDOWN"
+            else:
+                nextState = "CAM"
+
+        elif presentState == "SHUTDOWN":
+            camera.shutdown()
+            cv2.destroyAllWindows()
+            break
 
         else:
             nextState = "INIT"
