@@ -9,3 +9,4 @@ venv
 
 # plots
 *.png
+*.csv
