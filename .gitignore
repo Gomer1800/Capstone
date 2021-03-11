@@ -6,3 +6,6 @@ venv
 
 # intellij
 .idea
+
+# plots
+.png
