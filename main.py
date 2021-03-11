@@ -12,6 +12,8 @@ import Core.FacialFeatureDetection.Subsystem as FacialFeatureDetection
 import Core.MaskEvaluate.Subsystem as MaskEvaluate
 
 import cv2
+import numpy as np
+import matplotlib.pyplot as plt
 import os
 import time
 
@@ -63,11 +65,11 @@ if __name__ == '__main__':
     NUM_CYCLE = 100
     # TODO(LUIS): When LEAK detection is implement, add timing data to dictionary
     timing_dict = {
-        "CAM": NUM_CYCLE * [-1.0],
-        "PRE": NUM_CYCLE * [-1.0],
-        "MASK": NUM_CYCLE * [-1.0],
-        "FACE": NUM_CYCLE * [-1.0],
-        "POST": NUM_CYCLE * [-1.0],
+        "CAM": np.zeros((NUM_CYCLE), dtype=float),
+        "PRE": np.zeros((NUM_CYCLE), dtype=float),
+        "MASK": np.zeros((NUM_CYCLE), dtype=float),
+        "FACE": np.zeros((NUM_CYCLE), dtype=float),
+        "POST": np.zeros((NUM_CYCLE), dtype=float),
     }
     cycle_counter = 0
 
