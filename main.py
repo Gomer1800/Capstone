@@ -15,11 +15,10 @@ from Data_Visualizer import functions
 import argparse
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 import os
 import time
+import sys
 
-from datetime import datetime
 from tensorflow.keras.models import load_model
 
 
@@ -34,6 +33,16 @@ def init_argparse():
                         required=True,
                         choices=['WEB', 'IP'],
                         help="Select camera type: 'WEB' for web-cam or 'IP' for ip-camera.")
+    parser.add_argument('--snapshot',
+                        action='store_true',
+                        default=False,
+                        help="Single frame capture mode, waits for keypress 'q")
+    parser.add_argument('--timing_data',
+                        action='store',
+                        dest='num_images',
+                        type=int,
+                        help="Record subsystem timing data and capture [num_images], generate box plot png and store "
+                             "timing data in csv. [num_images] > 0")
     return parser
 
 
@@ -75,16 +84,22 @@ if __name__ == '__main__':
     # Dictionary where keys correspond to subsystems and value is an array of timing data
     # where the index corresponds to a given cycle or image taken
     # TODO(LUIS): Add num_cycles to arg parser branch
-    NUM_CYCLE = 20
+    if options.num_images is not None:
+        if options.num_images > 0:
+            NUM_CYCLE = options.num_images
 
-    # TODO(LUIS): When LEAK detection is implement, add timing data to dictionary
-    timing_dict = {
-        "CAM": np.zeros((NUM_CYCLE), dtype=float),
-        "PRE": np.zeros((NUM_CYCLE), dtype=float),
-        "MASK": np.zeros((NUM_CYCLE), dtype=float),
-        "FACE": np.zeros((NUM_CYCLE), dtype=float),
-        "POST": np.zeros((NUM_CYCLE), dtype=float),
-    }
+            # TODO(LUIS): When LEAK detection is implement, add timing data to dictionary
+            timing_dict = {
+                "CAM": np.zeros((NUM_CYCLE), dtype=float),
+                "PRE": np.zeros((NUM_CYCLE), dtype=float),
+                "MASK": np.zeros((NUM_CYCLE), dtype=float),
+                "FACE": np.zeros((NUM_CYCLE), dtype=float),
+                "POST": np.zeros((NUM_CYCLE), dtype=float),
+            }
+        else:
+            arg_parser.print_usage()
+            sys.exit()
+
     cycle_counter = 0
 
     while loop is True:
@@ -156,7 +171,8 @@ if __name__ == '__main__':
             # stop clock
             end = time.time()
             # record timing data
-            timing_dict[presentState][cycle_counter] = end - start
+            if options.num_images is not None:
+                timing_dict[presentState][cycle_counter] = end - start
             nextState = "PRE"
 
         elif presentState == "PRE":  # Face Detection Module
@@ -175,7 +191,8 @@ if __name__ == '__main__':
                     prepared.append(modified)
 
             end = time.time()
-            timing_dict[presentState][cycle_counter] = end - start
+            if options.num_images is not None:
+                timing_dict[presentState][cycle_counter] = end - start
             nextState = "MASK"
 
         elif presentState == "MASK":
@@ -184,8 +201,10 @@ if __name__ == '__main__':
             if len(prepared) > 0:
                 predictions = []
                 predictions = mask_detection.runInference(prepared, predictions, masknet)
+
             end = time.time()
-            timing_dict[presentState][cycle_counter] = end - start
+            if options.num_images is not None:
+                timing_dict[presentState][cycle_counter] = end - start
             nextState = "LEAK"
 
         elif presentState == "LEAK":
@@ -203,7 +222,8 @@ if __name__ == '__main__':
             mask_eval.mask_evaluation(nose_rects, mouth_rects, shape)
 
             end = time.time()
-            timing_dict[presentState][cycle_counter] = end - start
+            if options.num_images is not None:
+                timing_dict[presentState][cycle_counter] = end - start
             nextState = "POST"
 
         elif presentState == "POST":
@@ -236,22 +256,42 @@ if __name__ == '__main__':
                 break
 
             end = time.time()
-            timing_dict[presentState][cycle_counter] = end - start
+            if options.num_images is not None:
+                timing_dict[presentState][cycle_counter] = end - start
             nextState = "DISPLAY"
 
         elif presentState == "DISPLAY":
-            cv2.imshow("Frame", frame)
+            if options.snapshot is False:  # STREAM MODE
+                cv2.imshow("Frame", frame)
 
-            # if the `q` key was pressed, break from the loop
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q"):
-                break
+                # if the `e` key was pressed, exit and shutdown
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord("e"):
+                    nextState = "SHUTDOWN"
+                    break
+                else:
+                    nextState = "CAM"
+
+            else:  # SNAPSHOT MODE
+                while True:
+                    cv2.imshow("Frame", frame)
+                    key = cv2.waitKey(1) & 0xFF
+
+                    # hold here, if `q` key was pressed take next image
+                    if key == ord("q"):
+                        nextState = "CAM"
+                        break
+
+                    if key == ord("e"):
+                        nextState = "SHUTDOWN"
+                        break
 
             cycle_counter += 1
-            if cycle_counter == NUM_CYCLE:
-                nextState = "SHUTDOWN"
-            else:
-                nextState = "CAM"
+            if options.num_images is not None:
+                if cycle_counter == NUM_CYCLE:
+                    nextState = "SHUTDOWN"
+                else:
+                    nextState = "CAM"
 
         elif presentState == "SHUTDOWN":
             camera.shutdown()
@@ -264,5 +304,6 @@ if __name__ == '__main__':
         presentState = nextState
 
     # TODO(LUIS): Have the arg parser option for data visualization and number of cycles
-    functions.generate_box_plot(timing_dict)
+    if options.num_images is not None:
+        functions.generate_box_plot(timing_dict)
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
