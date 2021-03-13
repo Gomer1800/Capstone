@@ -59,10 +59,14 @@ class SubSystem:
         if len(nose_rects) > 0:
             for (nose_startX, nose_startY, nose_endX, nose_endY) in nose_rects:
                 cv2.rectangle(frame, (nose_startX, nose_startY), (nose_endX, nose_endY), (0, 255, 0), 1)
+                # There are more predictions but we only care about the first one
+                break
 
         if len(mouth_rects) > 0:
             for (mouth_startX, mouth_startY, mouth_endX, mouth_endY) in mouth_rects:
                 cv2.rectangle(frame, (mouth_startX, mouth_startY), (mouth_endX, mouth_endY), (0, 255, 0), 1)
+                # There are more predictions but we only care about the first one
+                break
 
         # Output Frame
         # TODO(LUIS): Annotate these in the image?
