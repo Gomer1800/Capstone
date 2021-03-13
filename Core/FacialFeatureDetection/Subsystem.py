@@ -69,7 +69,7 @@ class Subsystem:
             endYscale = 0.25
 
         elif facial_feat == "nose":
-            rects = self.noseCascade.detectMultiScale(gray, 1.3, 5)
+            rects = self.noseCascade.detectMultiScale(gray, 1.3, 7)
             endYscale = 0.25
 
         newRects = self.calculate_coords(rects, endYscale)
