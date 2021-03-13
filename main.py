@@ -14,9 +14,12 @@ import Core.MaskEvaluate.Subsystem as MaskEvaluate
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.pyplot as figure
 import os
+import pandas as pd
 import time
 
+from datetime import datetime
 from tensorflow.keras.models import load_model
 
 # def print_hi(name):
@@ -62,7 +65,7 @@ if __name__ == '__main__':
     # Dictionary where keys correspond to subsystems and value is an array of timing data
     # where the index corresponds to a given cycle or image taken
     # TODO(LUIS): Add num_cycles to arg parser branch
-    NUM_CYCLE = 100
+    NUM_CYCLE = 20
     # TODO(LUIS): When LEAK detection is implement, add timing data to dictionary
     timing_dict = {
         "CAM": np.zeros((NUM_CYCLE), dtype=float),
@@ -247,6 +250,18 @@ if __name__ == '__main__':
 
         presentState = nextState
 
+    # Construct pandas dataframes
+    timing_data = np.array(
+        [timing_dict['CAM'],
+         timing_dict['PRE'],
+         timing_dict['FACE'],
+         timing_dict['MASK'],
+         timing_dict['POST']])
+    timing_data = np.rot90(timing_data)
+    data_frame = pd.DataFrame(timing_data,
+                              columns=['CAM', 'PRE', 'FACE', 'MASK', 'POST'])
+    data_frame.boxplot()
+    """
     # Plot data, follow this guide https://pythonforundergradengineers.com/python-matplotlib-error-bars.html
     # enter raw data
     cam = timing_dict["CAM"]
@@ -296,11 +311,24 @@ if __name__ == '__main__':
     ax.set_ylabel('Time (seconds)')
     ax.set_xticks(x_pos)
     ax.set_xticklabels(subsystems)
-    ax.set_title('Timing Performance of Subsystems')
+    ax.set_title('Processing Time per Subsystems')
     ax.yaxis.grid(True)
 
     # Save the figure and show
+    timestamp = datetime.now().strftime("%d-%b-%Y (%H_%M_%S.%f)")
+    # plt.gcf().set_size_inches(20, 10)
     plt.tight_layout()
-    plt.savefig('bar_plot_with_error_bars.png')
+    plt.savefig(timestamp + ".png")
     plt.show()
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+    # save timing dict to csv, w/ timestamp
+    timestamp = datetime.now().strftime("%d-%b-%Y (%H_%M_%S.%f)")
+    file_name = timestamp + ".csv"
+    with open(file_name, "a") as file:
+        for subsystem in timing_dict.keys():
+            # write subsystem name
+            file.write(subsystem + "\n")
+            # write data
+            np.savetxt(fname=file, X=timing_dict[subsystem], delimiter=",")
+    """
+    # See PyCharm help at https://www.jetbrains.com/help/pycharm/
