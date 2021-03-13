@@ -10,13 +10,12 @@ import Core.MaskDetection.SubSystem as MaskDetection
 import Core.PostProcessing.SubSystem as Postprocessor
 import Core.FacialFeatureDetection.Subsystem as FacialFeatureDetection
 import Core.MaskEvaluate.Subsystem as MaskEvaluate
+from Data_Visualizer import functions
 
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.pyplot as figure
 import os
-import pandas as pd
 import time
 
 from datetime import datetime
@@ -66,6 +65,7 @@ if __name__ == '__main__':
     # where the index corresponds to a given cycle or image taken
     # TODO(LUIS): Add num_cycles to arg parser branch
     NUM_CYCLE = 20
+
     # TODO(LUIS): When LEAK detection is implement, add timing data to dictionary
     timing_dict = {
         "CAM": np.zeros((NUM_CYCLE), dtype=float),
@@ -221,6 +221,8 @@ if __name__ == '__main__':
                                                                 mouth_rects,
                                                                 nose_rects,
                                                                 facial_feature_flags)
+                # There are more predictions but we only care about the first one
+                break
 
             end = time.time()
             timing_dict[presentState][cycle_counter] = end - start
@@ -250,85 +252,6 @@ if __name__ == '__main__':
 
         presentState = nextState
 
-    # Construct pandas dataframes
-    timing_data = np.array(
-        [timing_dict['CAM'],
-         timing_dict['PRE'],
-         timing_dict['FACE'],
-         timing_dict['MASK'],
-         timing_dict['POST']])
-    timing_data = np.rot90(timing_data)
-    data_frame = pd.DataFrame(timing_data,
-                              columns=['CAM', 'PRE', 'FACE', 'MASK', 'POST'])
-    data_frame.boxplot()
-    """
-    # Plot data, follow this guide https://pythonforundergradengineers.com/python-matplotlib-error-bars.html
-    # enter raw data
-    cam = timing_dict["CAM"]
-    pre = timing_dict["PRE"]
-    mask = timing_dict["MASK"]
-    face = timing_dict["FACE"]
-    post = timing_dict["POST"]
-
-    # calculate averages
-    cam_mean = np.mean(cam)
-    pre_mean = np.mean(pre)
-    mask_mean = np.mean(mask)
-    face_mean = np.mean(face)
-    post_mean = np.mean(post)
-
-    # calculate standard deviation
-    cam_std = np.std(cam)
-    pre_std = np.std(pre)
-    mask_std = np.std(mask)
-    face_std = np.std(face)
-    post_std = np.std(post)
-
-    # create lists for plots
-    subsystems = [
-        'Camera',
-        'Pre-Processing',
-        'Mask Detection',
-        'Facial Feature Detection',
-        'Post-Processing']
-    x_pos = np.arange(len(subsystems))
-    means = [
-        cam_mean,
-        pre_mean,
-        mask_mean,
-        face_mean,
-        post_mean]
-    error = [
-        cam_std,
-        pre_std,
-        mask_std,
-        face_std,
-        post_std]
-
-    # Build the plot
-    fig, ax = plt.subplots()
-    ax.bar(x_pos, means, yerr=error, align='center', alpha=0.5, ecolor='black', capsize=10)
-    ax.set_ylabel('Time (seconds)')
-    ax.set_xticks(x_pos)
-    ax.set_xticklabels(subsystems)
-    ax.set_title('Processing Time per Subsystems')
-    ax.yaxis.grid(True)
-
-    # Save the figure and show
-    timestamp = datetime.now().strftime("%d-%b-%Y (%H_%M_%S.%f)")
-    # plt.gcf().set_size_inches(20, 10)
-    plt.tight_layout()
-    plt.savefig(timestamp + ".png")
-    plt.show()
-
-    # save timing dict to csv, w/ timestamp
-    timestamp = datetime.now().strftime("%d-%b-%Y (%H_%M_%S.%f)")
-    file_name = timestamp + ".csv"
-    with open(file_name, "a") as file:
-        for subsystem in timing_dict.keys():
-            # write subsystem name
-            file.write(subsystem + "\n")
-            # write data
-            np.savetxt(fname=file, X=timing_dict[subsystem], delimiter=",")
-    """
-    # See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    # TODO(LUIS): Have the arg parser option for data visualization and number of cycles
+    functions.generate_box_plot(timing_dict)
+# See PyCharm help at https://www.jetbrains.com/help/pycharm/
