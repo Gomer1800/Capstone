@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 from datetime import datetime
 
@@ -8,10 +9,14 @@ def generate_box_plot(timing_dict):
     directory = "Data_Visualizer/data/"
     timestamp = datetime.now().strftime("%d-%b-%Y_(%H_%M_%S.%f)")
 
+    # create data directory
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
     fig = plt.figure(figsize=(10, 7))
     plt.boxplot(timing_dict.values(), showfliers=False)
     plt.xticks([1, 2, 3, 4, 5],
-               ['CAM', 'PRE', 'FACE', 'MASK', 'POST'])
+               ['CAM', 'PRE', 'MASK', 'FACE', 'POST'])
     plt.ylabel('Time (s)')
     plt.xlabel('Subsystem Name')
     plt.suptitle('Subsystem Timing Performance')
