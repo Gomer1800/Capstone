@@ -73,7 +73,7 @@ if __name__ == '__main__':
     frame = None
     prepared = None
     masknet = None
-    predictions = None
+    predictions = []
     locations = None
     shape = None
     mouth_rects = None
@@ -185,6 +185,7 @@ if __name__ == '__main__':
             prepared = []
             if len(faces) > 0:
                 for face in faces:
+                    # TODO(LUIS): weird bug occasionally happens when a face is incorrectly identified when there is none
                     preprocessor.setFrame(face)
                     modified = preprocessor.prepareFace()
                     cv2.imshow("modified", modified)
@@ -193,6 +194,7 @@ if __name__ == '__main__':
             end = time.time()
             if options.num_images is not None:
                 timing_dict[presentState][cycle_counter] = end - start
+
             nextState = "MASK"
 
         elif presentState == "MASK":
@@ -233,27 +235,28 @@ if __name__ == '__main__':
                                     mask_eval.mouthflag,
                                     mask_eval.shapeflag]
 
-            for (box, pred) in zip(locations, predictions):
-                (mask, withoutMask) = pred
-                # will make a box around face not mask area because these are Kenneth's coordinates
-                (startX, startY, endX, endY) = box
+            if len(predictions) != 0:
+                for (box, pred) in zip(locations, predictions):
+                    (mask, withoutMask) = pred
+                    # will make a box around face not mask area because these are Kenneth's coordinates
+                    (startX, startY, endX, endY) = box
 
-                # Post-Processing Module
-                #       1) will always yield green box because mask > noMask; probability = 100% mask
-                #       2) switch tuple to (0, 1) if testing mask < noMask (red box); probability = 100% no mask
-                #       3) to test probability reading, play with different numbers in tuple
-                #          ie. (0.38, 0.62) -> probability = 62% no mask
-                output_frame = postprocessor.prepareOutputFrame(frame,
-                                                                (pred[0], pred[1]),
-                                                                startX,
-                                                                startY,
-                                                                endX, endY,
-                                                                shape,
-                                                                mouth_rects,
-                                                                nose_rects,
-                                                                facial_feature_flags)
-                # There are more predictions but we only care about the first one
-                break
+                    # Post-Processing Module
+                    #       1) will always yield green box because mask > noMask; probability = 100% mask
+                    #       2) switch tuple to (0, 1) if testing mask < noMask (red box); probability = 100% no mask
+                    #       3) to test probability reading, play with different numbers in tuple
+                    #          ie. (0.38, 0.62) -> probability = 62% no mask
+                    output_frame = postprocessor.prepareOutputFrame(frame,
+                                                                    (pred[0], pred[1]),
+                                                                    startX,
+                                                                    startY,
+                                                                    endX, endY,
+                                                                    shape,
+                                                                    mouth_rects,
+                                                                    nose_rects,
+                                                                    facial_feature_flags)
+                    # There are more predictions but we only care about the first one
+                    break
 
             end = time.time()
             if options.num_images is not None:
